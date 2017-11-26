@@ -597,24 +597,11 @@ create_database_table <- function(){
   }
   
   
-  database_table$category <- NULL
-  database_table$sub_category <- NULL
-  
-  for (i in 1:length(categories)) {
-    
-    if( length(categories[[i]]) == 2){
-      database_table[i , "category"] <- categories[[i]][1]
-      database_table[i , "sub_category"] <- categories[[i]][2]
-    }
-    else{
-      database_table[i , "category"] <- categories[[i]][1]
-    }
-    
-    
-  }
+  database_table$category <- map_chr( .x = categories , ~ .x[[1]][1])
+
   
   
-  
+  #need to reformat quarterly data as 02 means second quarter but we want it to refer to June
   quarterly_data <- filter(database_table, Frequency=="Quarterly")
   quarterly_dates <- quarterly_data$Frequency
   #Remove quarterly info for now
@@ -641,8 +628,11 @@ create_database_table <- function(){
   
   #add back in quarterly info
   database_table <- bind_rows(database_table , quarterly_data)
-  database_table <- database_table %>% select(-Frequencies,-code_number.y) %>% rename(code_number = code_number.x)
-  
+  database_table <- database_table %>% 
+                    select(-Frequencies, -code_number.y) %>% 
+                    rename(code_number = code_number.x) %>% 
+                    select(Date:measurement_units, Description,time_series_code , Frequency , `Type Description` , category)
+  colnames(database_table) <- colnames(database_table) %>% str_to_lower() %>% str_replace_all(" ","_")
   
   #write results
   fwrite(database_table,"download/online_statistical_query/database_table.csv")
@@ -685,7 +675,8 @@ scrape_time <- system.time({
 print(scrape_time)
 #TODO finish check for updates 
 
-#TODO look at check_progress() to adapt to new looping method
+#TODO improve output of cretae_dat
+
 
 
 
