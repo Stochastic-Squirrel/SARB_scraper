@@ -18,14 +18,14 @@ library(progress)
 library(lubridate)
 library(foreach)
 library(doParallel)
-
+library(curl)
 
 
 
 website_url <- "https://www.resbank.co.za"
 
 #set working directory when running script through terminal
-setwd("/t-drive/Internal/Stats_team/Eighty20/treasury_scrape")
+#setwd("/t-drive/Internal/Stats_team/Eighty20/treasury_scrape")
 
 eCaps <- list(
   chromeOptions =
@@ -339,8 +339,6 @@ clean_ts_download <- function(){
 #Note. This is based off what is in the processed folder and not the database_table.csv
 check_progress <- function(){
   #Check progress returns a vector of indicator codes which are NOT present in processed
-  #In the case where a given indicator is partially finished i.e. 1000J is there but not 1000m,
-  #The indicator 1000 will be declared unfinished and thus 1000J will be downloaded again
   file_list <- list.files("download/online_statistical_query/processed/") %>% substring(. , 1, 8)
   if(length(file_list)== 0){return(vector())} #if no files in directory
   
@@ -674,10 +672,10 @@ scrape_time <- system.time({
 })
 print(scrape_time)
 #TODO finish check for updates 
-
 #TODO improve output of cretae_dat
 
 
-
-
+#Only download yearly stuff
+indicator_codes <- fread("indicator_codes.csv") %>% filter(Frequencies !='Daily (6 Days)') 
+try(scrape_online_statistical_query(custom_selection = indicator_codes$ts_code ,cores=6)) 
 
